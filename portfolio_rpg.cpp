@@ -122,6 +122,17 @@ public:
     }
 };
 
+class BattleManager 
+{
+public:
+    BattleManager() {}
+    bool startBattle(Player& player, bool debug, int& endingType) 
+    {
+        //bgm変更
+        changeBgm(BGM_BATTLE);
+    }
+};
+
 class Player :public Character
 {
 public:
