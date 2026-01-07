@@ -12,6 +12,10 @@
 
 using namespace std;
 
+//プロトタイプ宣言
+void plusMoney(int& playerMoney, int enemyMoneyMin, int enemyMoneyMax);
+bool getContinuePlay();
+
 // --- BGM管理用 ---
 enum BgmType {
     BGM_STOP,
@@ -119,17 +123,6 @@ public:
         cout << damage << "のダメージ!" << endl;
 
         def = false;
-    }
-};
-
-class BattleManager 
-{
-public:
-    BattleManager() {}
-    bool startBattle(Player& player, bool debug, int& endingType) 
-    {
-        //bgm変更
-        changeBgm(BGM_BATTLE);
     }
 };
 
@@ -298,6 +291,176 @@ public:
     Enemy(string name, int hp, int attack, int exp, int level)
         : Character(name, hp, attack, exp, level)
     {
+    }
+};
+
+
+class BattleManager
+{
+public:
+    BattleManager() {}
+
+    bool startBattle(Player& player, bool debug, int& endingType)
+    {
+        //戦闘BGM
+        changeBgm(BGM_BATTLE);
+
+        //フラグリセット
+        bool isHp = true;
+        bool escape = false;
+        bool defence = false;
+        bool power = false;
+        int guard = 0;
+        int upTurn = 0;
+
+        //敵生成
+        string enemyName = "";
+        int enemyHp = 0;
+        int enemyAttack = 0;
+        int enemyExp = 0;
+        int enemyLevel = 0;
+        int enemyMoneyMin = 0;
+        int enemyMoneyMax = 0;
+
+        // 敵タイプ
+        int enemyType = 0;
+        random_device rd;
+        mt19937 ene(rd());
+        uniform_int_distribution<> distrib(1, 3);
+        enemyType = distrib(ene);
+
+        if (debug == true) {
+            enemyType = 1;
+            cout << "debug mode" << endl;
+        }
+
+        if (enemyType == 1) {
+            enemyName = "スライム";
+            enemyHp = 20;
+            enemyAttack = 5;
+            enemyExp = 5;
+            enemyLevel = 1;
+            enemyMoneyMin = 50;
+            enemyMoneyMax = 70;
+        }
+        else if (enemyType == 2) {
+            enemyName = "ゴーレム";
+            enemyHp = 100;
+            enemyAttack = 20;
+            enemyExp = 20;
+            enemyLevel = 5;
+            enemyMoneyMin = 150;
+            enemyMoneyMax = 200;
+        }
+        else {
+            enemyName = "ドラゴン";
+            enemyHp = 150;
+            enemyAttack = 30;
+            enemyExp = 30;
+            enemyLevel = 10;
+            enemyMoneyMin = 400;
+            enemyMoneyMax = 500;
+        }
+
+        Enemy enemy(enemyName, enemyHp, enemyAttack, enemyExp, enemyLevel);
+
+        //パッシブスキル（仮）
+        player.passiveSkill(player.level);
+
+        cout << enemy.name + "があらわれた！\n" << endl;
+        cout << "～戦闘開始～" << endl;
+
+        //--- 戦闘ループ ---
+        while ((player.hp > 0) && (enemy.hp > 0)) {
+            cout << "現在のHP" << endl;
+            cout << player.name << "のHP:" << player.hp << "/" << player.maxHp << endl;
+            cout << enemy.name << "のHP:" << enemy.hp << "\n" << endl;
+
+            //Playerのターン
+            cout << "【" << player.name << "のターン】" << endl;
+            cout << "行動を選ぼう" << endl;
+
+            //行動選択
+            player.chooseAction(player.hp, enemy.hp, player.attack, escape, defence, power);
+
+            //Defence処理
+            if (defence == true && guard == 0) {
+                guard = 3;
+            }
+            if (guard != 0) {
+                defence = true;
+                guard -= 1;
+            }
+            //Powerup処理
+            if (power == true && upTurn == 0) {
+                player.attack *= 2;
+                upTurn = 3;
+            }
+            if (upTurn != 0) {
+                power = true;
+                upTurn -= 1;
+                if (upTurn == 0) {
+                    player.attack /= 2;
+                    cout << "Powerupの効果が切れた！" << endl;
+                }
+            }
+            //Escape処理
+            if (escape == true) {
+                cout << "逃走成功" << endl;
+                break;
+            }
+            //HP判定
+            player.getHp(isHp, player.hp, enemy.hp);
+            if (isHp == false) break;
+
+            //Enemyのターン
+            if (enemy.hp > 0) {
+                cout << "【" + enemy.name + "のターン" + "】" << endl;
+                cout << enemy.name << "の攻撃!" << endl;
+                enemy.attackCharacter(player.hp, enemy.attack, defence);
+
+                //HP判定
+                enemy.getHp(isHp, player.hp, enemy.hp);
+                if (isHp == false) break;
+            }
+            power = false;
+            cout << "\n" << endl;
+        } //戦闘ループ終了
+
+        //--- 戦闘後処理 ---
+        bool gameResult = true; //ゲーム継続フラグ
+
+        if (player.hp == 0) { //敗北
+            gameResult = false;
+            endingType = 1; //gameover
+        }
+        else if (enemy.hp == 0) { //勝利
+            player.addExp(enemy.exp);
+            plusMoney(player.money, enemyMoneyMin, enemyMoneyMax);
+
+            //マップに戻るか確認
+            if (getContinuePlay() == false) {
+                endingType = 10;
+                gameResult = false;
+            }
+        }
+        else if (escape == true) { //逃走
+            //マップに戻るか確認
+            if (getContinuePlay() == false) {
+                endingType = 10;
+                gameResult = false;
+            }
+        }
+
+        //BGM制御
+        if (gameResult) {
+            changeBgm(BGM_FIELD);
+        }
+        else {
+            changeBgm(BGM_STOP);
+        }
+
+        return gameResult;
     }
 };
 
@@ -475,9 +638,9 @@ int main()
     // マップ(フィールド)BGMを再生
     changeBgm(BGM_FIELD);
 
-    //debug
+    // debug
     bool debug = false;
-    //タイトル
+    // タイトル
     string title = "RPG";
     totle(title);
     cout << "Press Enter to start..." << endl;
@@ -486,39 +649,34 @@ int main()
 
     string Playername;
 
-    //名前入力
+    // 名前入力
     cout << "プレイヤーの名前を入力してください" << endl;
     cin >> Playername;
-    //debugモード.debugと打つとスライム固定にします。
+
+    // debugモード判定
     debug = isDebug(Playername);
     system("cls");
+
     int initialHp = 100;
     int initialAttack = 10;
-    int initialNextLevelExp = 10;//次のレベルまでの経験値
-    // Player(名前, 初期HP, 初期攻撃力, 初期EXP, 初期レベル, 次のEXP, 初期所持金)
-    Player Player(Playername, initialHp, initialAttack, 0, 1, initialNextLevelExp, 100);
-    int enemyType = 0;
+    int initialNextLevelExp = 10; // 次のレベルまでの経験値
 
+    // Playerオブジェクトの作成 (変数名を player に変更)
+    Player player(Playername, initialHp, initialAttack, 0, 1, initialNextLevelExp, 100);
 
-    //変数を定義
-    bool gameflag = true; //gameを終了するか否かの選択
-    bool escape = false;
-    bool isHp = true;
-    bool defence = false;
-    bool power = false;
-    int level = 0;
-    float levelCorrection = 1.0;//レベルに応じて敵に補正をかけるための変数
-    int guard = 0;
-    int upTurn = 0;
-    int endingType = 0;//呼び出すエンディングの種類、0の時は異常終了
+    // バトルマネージャーの作成
+    BattleManager battleManager;
 
+    // 変数を定義
+    bool gameflag = true; // gameを終了するか否かの選択
+    int endingType = 0;   // 呼び出すエンディングの種類
 
-    //ゲームスタート (マップ選択ループ)
+    // ゲームスタート (マップ選択ループ)
     while (gameflag == true) {
 
-        //system("cls");
+        // system("cls");
         cout << "------------------------------------------------" << endl;
-        cout << Player.name << " | LV: " << Player.level << " | HP: " << Player.hp << "/" << Player.maxHp << " | G: " << Player.money << endl;
+        cout << player.name << " | LV: " << player.level << " | HP: " << player.hp << "/" << player.maxHp << " | G: " << player.money << endl;
         cout << "------------------------------------------------" << endl;
         cout << "どこへ行きますか？" << endl;
         cout << "1: 森 (戦闘)" << endl;
@@ -530,174 +688,13 @@ int main()
         cin >> mapChoice;
 
         if (mapChoice == 1) {
-            // --- 戦闘処理 ---
-            // 戦闘BGMに変更
-            changeBgm(BGM_BATTLE);
-
-            //flag reset
-            isHp = true;
-            escape = false;
-            // "sound.wav" というWAVファイルを非同期で再生する
-            //PlaySound(TEXT("sound.wav"), NULL, SND_FILENAME | SND_ASYNC);
-
-            string enemyName = "";
-            int enemyHp = 0;
-            int enemyAttack = 0;
-            int enemyExp = 0;
-            int enemyLevel = 0;
-            int enemyMoneyMin = 0;
-            int enemyMoneyMax = 0;
-
-            // 1. 乱数のシード設定
-            random_device rd;
-            // 2. 乱数エンジンを初期化
-            mt19937 ene(rd());
-            // 3. 分布を定義
-            uniform_int_distribution<> distrib(1, 3);
-            enemyType = distrib(ene);
-
-            //string debugStr = debug? "true" : "false";cout << debugStr << endl;
-
-            if (debug == true) {
-                enemyType = 1;
-                cout << "debug mode" << endl;
-            }
-
-            if (enemyType == 1) {
-                enemyName = "スライム";
-                enemyHp = 20;
-                enemyAttack = 5;
-                enemyExp = 5;
-                enemyLevel = 1;
-                enemyMoneyMin = 50;
-                enemyMoneyMax = 70;
-            }
-            else if (enemyType == 2) {
-                enemyName = "ゴーレム";
-                enemyHp = 100;
-                enemyAttack = 20;
-                enemyExp = 20;
-                enemyLevel = 5;
-                enemyMoneyMin = 150;
-                enemyMoneyMax = 200;
-            }
-            else {
-                enemyName = "ドラゴン";
-                enemyHp = 150;
-                enemyAttack = 30;
-                enemyExp = 30;
-                enemyLevel = 10;
-                enemyMoneyMin = 400;
-                enemyMoneyMax = 500;
-            }
-            //cout << enemyName << endl;
-
-            Enemy Enemy(enemyName, enemyHp, enemyAttack, enemyExp, enemyLevel);
-            //レベルアップ時に戦闘が始まったときに回復するパッシブいれたい、、、、関数だけ置いておく
-            Player.passiveSkill(level);
-            //continue処理
-
-            cout << Enemy.name + "があらわれた！\n" << endl;
-            cout << "～戦闘開始～" << endl;
-
-            while ((Player.hp > 0) && (Enemy.hp > 0)) {
-                cout << "現在のHP" << endl;
-                cout << Player.name << "のHP:" << Player.hp << "/" << Player.maxHp << endl;
-                cout << Enemy.name << "のHP:" << Enemy.hp << "\n" << endl;
-
-                //Playerのターン
-                cout << "【" << Player.name << "のターン】" << endl;
-
-                cout << "行動を選ぼう" << endl;
-                //行動の選択
-                Player.chooseAction(Player.hp, Enemy.hp, Player.attack, escape, defence, power);
-
-                //Defenceを選択した場合
-                if (defence == true && guard == 0) {
-                    guard = 3;
-                    //cout << guard << endl;
-                }
-                if (guard != 0) {
-                    defence = true;
-                    guard -= 1;
-                    //cout << guard << endl;
-                }
-                //Powerupを選択した場合
-                if (power == true && upTurn == 0) {
-                    Player.attack *= 2;
-                    upTurn = 3;
-                    //cout << upTurn << endl;
-                }
-                if (upTurn != 0) {
-                    power = true;
-                    upTurn -= 1;
-                    //cout << upTurn << endl;
-                    if (upTurn == 0) {
-                        Player.attack /= 2;
-                        cout << "Powerupの効果が切れた！" << endl;
-                    }
-                }
-                //Escapeを選択した場合
-                if (escape == true) {
-                    cout << "逃走成功" << endl;
-                    break;
-                }
-                //HPの判断
-                Player.getHp(isHp, Player.hp, Enemy.hp);
-                if (isHp == false) {
-                    break;
-                }
-
-                //Enemyのターン
-                if (Enemy.hp > 0) {
-                    cout << "【" + Enemy.name + "のターン" + "】" << endl;
-
-                    //Enemyの攻撃
-                    cout << Enemy.name << "の攻撃!" << endl;
-                    Enemy.attackCharacter(Player.hp, Enemy.attack, defence);
-                    //HPの判断
-                    Enemy.getHp(isHp, Player.hp, Enemy.hp);
-                    if (isHp == false) {
-                        break;
-                    }
-                }
-                power = false;
-
-                cout << "\n" << endl;
-            }//戦闘ループここまで
-
-            // --- 戦闘後処理 ---
-            if (Player.hp == 0) {// 敗北
-                gameflag = false;
-                endingType = 1;//gameover
-            }
-            else if (Enemy.hp == 0) {// 勝利
-                Player.addExp(Enemy.exp); // 経験値
-                plusMoney(Player.money, enemyMoneyMin, enemyMoneyMax);
-                gameflag = getContinuePlay();
-                if (gameflag == false) {
-                    endingType = 10;
-                }
-            }
-            else if (escape == true) {// 逃走経験値なし
-                gameflag = getContinuePlay();
-                if (gameflag == false) {
-                    endingType = 10;
-                }
-            }
-
-            // マップに戻るか、ゲーム終了かによってBGM制御
-            if (gameflag) {
-                changeBgm(BGM_FIELD);
-            }
-            else {
-                changeBgm(BGM_STOP);
-            }
+            // --- 戦闘処理 (BattleManagerに委譲) ---
+            // startBattleが false を返したらゲーム終了 (敗北 or 逃走後の終了)
+            gameflag = battleManager.startBattle(player, debug, endingType);
         }
         else if (mapChoice == 2) {
             // --- ショップ処理 ---
-            enterShop(Player);
-            // ショップから戻ってきたらループの先頭（マップ選択）に戻る
+            enterShop(player);
         }
         else if (mapChoice == 0) {
             // --- ゲーム終了 ---
@@ -708,7 +705,7 @@ int main()
             cout << "正しい番号を入力してください。" << endl;
         }
 
-    }//game loop end
+    }// game loop end
 
     if (gameflag == false) {
         endCledit(endingType);
@@ -718,6 +715,6 @@ int main()
     changeBgm(BGM_STOP);
 
     system("pause");
-    //system("pause > NUL");
+    // system("pause > NUL");
     return 0;
 }
