@@ -593,14 +593,14 @@ void enterShop(Player& player) {
         case 0:
             cout << "ありがとうございました！" << endl;
             //system("cls");
-            continue; // ループを抜ける
+            continue; //ループを抜ける
         default:
             cout << "その商品は取り扱っていません。" << endl;
 
-            //system("cls"); // 無効な入力の場合も画面をクリアして再表示
+            //system("cls"); //無効な入力の場合も画面をクリアして再表示
             totle("ショップ");
             cout << "いらっしゃいませ！" << endl;
-            continue; // ループの先頭に戻る
+            continue; //ループの先頭に戻る
         }
 
         if (player.money >= price) {
@@ -635,12 +635,12 @@ void enterShop(Player& player) {
 
 int main()
 {
-    // マップ(フィールド)BGMを再生
+    //マップ(フィールド)BGMを再生
     changeBgm(BGM_FIELD);
 
-    // debug
+    //debug
     bool debug = false;
-    // タイトル
+    //タイトル
     string title = "RPG";
     totle(title);
     cout << "Press Enter to start..." << endl;
@@ -649,32 +649,30 @@ int main()
 
     string Playername;
 
-    // 名前入力
     cout << "プレイヤーの名前を入力してください" << endl;
     cin >> Playername;
 
-    // debugモード判定
+    //debugモード判定
     debug = isDebug(Playername);
     system("cls");
 
     int initialHp = 100;
     int initialAttack = 10;
-    int initialNextLevelExp = 10; // 次のレベルまでの経験値
+    int initialNextLevelExp = 10; //次のレベルまでの経験値
 
-    // Playerオブジェクトの作成 (変数名を player に変更)
+    //Playerオブジェクトの作成 (変数名を player に変更)
     Player player(Playername, initialHp, initialAttack, 0, 1, initialNextLevelExp, 100);
 
-    // バトルマネージャーの作成
+    //バトルマネージャーの作成
     BattleManager battleManager;
 
-    // 変数を定義
-    bool gameflag = true; // gameを終了するか否かの選択
-    int endingType = 0;   // 呼び出すエンディングの種類
+    bool gameflag = true; //gameを終了するか否かの選択
+    int endingType = 0;   //呼び出すエンディングの種類
 
-    // ゲームスタート (マップ選択ループ)
+    //ゲームスタート (マップ選択ループ)
     while (gameflag == true) {
 
-        // system("cls");
+        //system("cls");
         cout << "------------------------------------------------" << endl;
         cout << player.name << " | LV: " << player.level << " | HP: " << player.hp << "/" << player.maxHp << " | G: " << player.money << endl;
         cout << "------------------------------------------------" << endl;
@@ -688,16 +686,16 @@ int main()
         cin >> mapChoice;
 
         if (mapChoice == 1) {
-            // --- 戦闘処理 (BattleManagerに委譲) ---
-            // startBattleが false を返したらゲーム終了 (敗北 or 逃走後の終了)
+            //--- 戦闘処理 (BattleManagerに委譲) ---
+            //startBattleが false を返したらゲーム終了 (敗北 or 逃走後の終了)
             gameflag = battleManager.startBattle(player, debug, endingType);
         }
         else if (mapChoice == 2) {
-            // --- ショップ処理 ---
+            //--- ショップ処理 ---
             enterShop(player);
         }
         else if (mapChoice == 0) {
-            // --- ゲーム終了 ---
+            //--- ゲーム終了 ---
             gameflag = false;
             endingType = 10;
         }
@@ -711,10 +709,10 @@ int main()
         endCledit(endingType);
     }
 
-    // 終了時に音を止める
+    //終了時に音を止める
     changeBgm(BGM_STOP);
 
     system("pause");
-    // system("pause > NUL");
+    //system("pause > NUL");
     return 0;
 }
