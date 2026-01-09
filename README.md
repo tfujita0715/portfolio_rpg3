@@ -5,6 +5,7 @@
 サウンドに関してmp3をdebugディレクトリに以下のフォルダ構成で配置してください
 
 sounds-battles
+
       |-fields
       
 soudsフォルダをdebug直下に配置して実行のほどよろしくお願いします。
