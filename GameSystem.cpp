@@ -117,12 +117,14 @@ void enterShop(Player& player) {
 
 bool BattleManager::startBattle(Player& player, bool debug, int& endingType) {
     changeBgm(BGM_BATTLE);
+    BattleState state;
     bool isHp = true;
     bool escape = false;
     bool defence = false;
     bool power = false;
     int guard = 0;
     int upTurn = 0;
+    bool isGuardActive = false;
 
     random_device rd;
     mt19937 ene(rd());
@@ -132,9 +134,30 @@ bool BattleManager::startBattle(Player& player, bool debug, int& endingType) {
     if (debug) enemyType = 1;
 
     string eName; int eHp, eAtk, eExp, eLv, eMin, eMax;
-    if (enemyType == 1) { eName = "ƒXƒ‰ƒCƒ€"; eHp = 20; eAtk = 5; eExp = 5; eLv = 1; eMin = 50; eMax = 70; }
-    else if (enemyType == 2) { eName = "ƒS[ƒŒƒ€"; eHp = 100; eAtk = 20; eExp = 20; eLv = 5; eMin = 150; eMax = 200; }
-    else { eName = "ƒhƒ‰ƒSƒ“"; eHp = 150; eAtk = 30; eExp = 30; eLv = 10; eMin = 400; eMax = 500; }
+    if (enemyType == 1) { 
+        eName = "ƒXƒ‰ƒCƒ€"; 
+        eHp = 20; 
+        eAtk = 5; 
+        eExp = 5; 
+        eLv = 1; 
+        eMin = 50; 
+        eMax = 70; }
+    else if (enemyType == 2) { 
+        eName = "ƒS[ƒŒƒ€"; 
+        eHp = 100; 
+        eAtk = 20; 
+        eExp = 20; 
+        eLv = 5; 
+        eMin = 150; 
+        eMax = 200; }
+    else { 
+        eName = "ƒhƒ‰ƒSƒ“"; 
+        eHp = 150; 
+        eAtk = 30; 
+        eExp = 30; 
+        eLv = 10; 
+        eMin = 400; 
+        eMax = 500; }
 
     Enemy enemy(eName, eHp, eAtk, eExp, eLv);
     player.passiveSkill(player.level);
@@ -145,7 +168,7 @@ bool BattleManager::startBattle(Player& player, bool debug, int& endingType) {
         cout << "Œ»İ‚ÌHP -> " << player.name << ":" << player.hp << " / " << enemy.name << ":" << enemy.hp << endl;
 
         cout << "y" << player.name << "‚Ìƒ^[ƒ“z" << endl;
-        player.chooseAction(player.hp, enemy.hp, player.attack, escape, defence, power);
+        player.chooseAction(enemy, state);
 
         if (defence && guard == 0) guard = 3;
         if (guard > 0) { defence = true; guard--; }
@@ -161,7 +184,7 @@ bool BattleManager::startBattle(Player& player, bool debug, int& endingType) {
 
         if (enemy.hp > 0) {
             cout << "y" + enemy.name + "‚Ìƒ^[ƒ“z" << endl;
-            enemy.attackCharacter(player.hp, enemy.attack, defence);
+            enemy.attackCharacter(player, enemy.attack, isGuardActive);
             enemy.getHp(isHp, player.hp, enemy.hp);
             if (!isHp) break;
         }

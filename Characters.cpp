@@ -30,7 +30,7 @@ void Character::getHp(bool& ishp, int playerhp, int enemyhp) {
     }
 }
 
-void Character::attackCharacter(int& hp, int damage, bool def) {
+void Character::attackCharacter(Character& target, int damage, bool def) {
     int critical = 0;
     random_device rd;
     mt19937 judge(rd());
@@ -43,8 +43,8 @@ void Character::attackCharacter(int& hp, int damage, bool def) {
     if (def == true) {
         damage -= (damage / 2);
     }
-    hp -= damage;
-    if (hp <= 0) hp = 0;
+    target.hp -= damage;
+    if (target.hp <= 0) target.hp = 0;
     cout << damage << "のダメージ!" << endl;
 }
 
@@ -55,11 +55,11 @@ Player::Player(string name, int initialHp, int attack, int exp, int level, int i
     this->money = money;
 }
 
-void Player::chooseAction(int& playerhp, int& enemyhp, int attack, bool& escape, bool& def, bool& power) {
+void Player::chooseAction(Character& target, BattleState& state) {
     string Action;
     int selectSkill = 0;
     bool error = false;
-    def = false;
+    state.isDefending = false;
 
     do {
         cout << "[Attack] 相手にダメージを与える" << endl;
@@ -70,11 +70,11 @@ void Player::chooseAction(int& playerhp, int& enemyhp, int attack, bool& escape,
         system("cls");
 
         if (Action == "Attack" || Action == "attack") {
-            attackCharacter(enemyhp, attack, def);
+            attackCharacter(target, this->attack, false);
             break;
         }
         else if (Action == "Defence" || Action == "defence") {
-            def = true;
+            state.isDefending = true;
             cout << "ガードした！" << endl;
             break;
         }
@@ -82,14 +82,14 @@ void Player::chooseAction(int& playerhp, int& enemyhp, int attack, bool& escape,
             selectSkill = chooseSkill();
             if (selectSkill == 1) { //Magic
                 int total = (this->maxHp * 0.3);
-                int oldHp = playerhp;
-                playerhp += total;
-                if (playerhp >= this->maxHp) playerhp = this->maxHp;
-                cout << (playerhp - oldHp) << " 回復した" << endl;
+                int oldHp = this->hp;
+                this->hp += total;
+                if (this->hp >= this->maxHp) this->hp = this->maxHp;
+                cout << (this->hp - oldHp) << " 回復した" << endl;
                 break;
             }
             else if (selectSkill == 2) { //Powerup
-                power = true;
+                state.isPowerUp = true;
                 cout << "攻撃力が上がった！" << endl;
                 break;
             }
@@ -106,7 +106,7 @@ void Player::chooseAction(int& playerhp, int& enemyhp, int attack, bool& escape,
             uniform_int_distribution<> distrib(1, 2);
             int rdEscape = distrib(gen);
             if (rdEscape == 1) {
-                escape = true;
+                state.isEscape = true;
                 cout << "うまく逃げ切れた！" << endl;
             }
             else {

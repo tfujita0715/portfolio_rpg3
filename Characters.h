@@ -4,6 +4,16 @@
 
 using namespace std;
 
+//戦闘中の状態フラグ
+struct BattleState {
+    bool isEscape = false;    //逃走フラグ
+    bool isDefending = false; //防御フラグ
+    bool isPowerUp = false;   //攻撃力バフフラグ
+    int guardTurn = 0;        //残防御
+    int powerTurn = 0;        //残パワーアップ
+};
+
+
 class Character {
 public:
     string name;
@@ -14,8 +24,9 @@ public:
 
     Character(string name, int hp, int attack, int exp, int level);
     void getHp(bool& ishp, int playerhp, int enemyhp);
-    void attackCharacter(int& hp, int damage, bool def);
+    void attackCharacter(Character& target, int damage, bool def);
 };
+
 
 class Player : public Character {
 public:
@@ -24,7 +35,7 @@ public:
     int money;
 
     Player(string name, int initialHp, int attack, int exp, int level, int initialNextLevelExp, int money);
-    void chooseAction(int& playerhp, int& enemyhp, int attack, bool& escape, bool& def, bool& power);
+    void chooseAction(Character& target, BattleState& state);
     void levelUp();
     void addExp(int enemyExp);
     void passiveSkill(int hoge);
