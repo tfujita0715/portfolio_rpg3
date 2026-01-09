@@ -3,6 +3,8 @@
 #include <iostream>
 #include <algorithm> //min, max用
 
+#include "GameSystem.h"
+
 using namespace std;
 
 //--- Characterの実装 ---
@@ -32,10 +34,7 @@ void Character::getHp(bool& ishp, int playerhp, int enemyhp) {
 
 void Character::attackCharacter(Character& target, int damage, bool def) {
     int critical = 0;
-    random_device rd;
-    mt19937 judge(rd());
-    uniform_int_distribution<> distrib(1, 100);
-    critical = distrib(judge);
+    critical = getRandom(1,100);
     if (critical <= 5) {
         damage *= 2;
         cout << "クリティカル!" << endl;
@@ -101,10 +100,7 @@ void Player::chooseAction(Character& target, BattleState& state) {
             }
         }
         else if (Action == "Escape" || Action == "escape") {
-            random_device rd;
-            mt19937 gen(rd());
-            uniform_int_distribution<> distrib(1, 2);
-            int rdEscape = distrib(gen);
+            int rdEscape = getRandom(1,2);
             if (rdEscape == 1) {
                 state.isEscape = true;
                 cout << "うまく逃げ切れた！" << endl;

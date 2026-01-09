@@ -21,6 +21,7 @@ void title(string word);
 bool getContinuePlay();
 bool isDebug(string str);
 void systemMessage(int num);
-void endCledit(int endingType);
+void endCredit(int endingType);
 void plusMoney(int& playerMoney, int enemyMoneyMin, int enemyMoneyMax);
 void enterShop(Player& player);
+int getRandom(int min, int max);

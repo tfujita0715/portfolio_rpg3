@@ -9,6 +9,16 @@
 
 using namespace std;
 
+int getRandom(int min, int max) {
+    //初期化
+    static random_device rd;
+    static mt19937 gen(rd());
+
+    //分布生成
+    uniform_int_distribution<> distrib(min, max);
+    return distrib(gen);
+}
+
 //音楽
 void changeBgm(BgmType type) {
     static BgmType currentBgm = BGM_STOP;
@@ -63,17 +73,14 @@ void systemMessage(int num) {
     }
 }
 
-void endCledit(int endingType) {
+void endCredit(int endingType) {
     if (endingType == 0) cout << "異常終了" << endl;
     else if (endingType == 10) cout << "冒険終わり" << endl;
     else cout << "game over" << endl;
 }
 
 void plusMoney(int& playerMoney, int enemyMoneyMin, int enemyMoneyMax) {
-    random_device rd;
-    mt19937 randomMoney(rd());
-    uniform_int_distribution<> distrib(enemyMoneyMin, enemyMoneyMax);
-    int resultMoney = distrib(randomMoney);
+    int resultMoney = getRandom(enemyMoneyMin, enemyMoneyMax);
     playerMoney += resultMoney;
     cout << resultMoney << "G を手に入れた！" << endl;
     cout << "所持金額：" << playerMoney << "G" << endl;
@@ -126,11 +133,9 @@ bool BattleManager::startBattle(Player& player, bool debug, int& endingType) {
     int upTurn = 0;
     bool isGuardActive = false;
 
-    random_device rd;
-    mt19937 ene(rd());
-    uniform_int_distribution<> distrib(1, 3);
 
-    int enemyType = distrib(ene);
+
+    int enemyType = getRandom(1,3);
     if (debug) enemyType = 1;
 
     string eName; int eHp, eAtk, eExp, eLv, eMin, eMax;

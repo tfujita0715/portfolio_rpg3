@@ -53,7 +53,7 @@ int main() {
         }
     }
 
-    if (!gameflag) endCledit(endingType);
+    if (!gameflag) endCredit(endingType);
 
     changeBgm(BGM_STOP);
     system("pause");
